@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+<style>
+    #chat {
+        display: flex;
+        flex-direction: column;
+        width: 400px;
+        min-height: 600px;
+        border: 2px solid black;
+        margin: 40px;
+        padding: 20px;
+    }
+
+    #history {
+        flex-grow: 1;
+    }
+
+    .card {
+        margin-bottom: 10px;
+    }
+
+    #input {
+        display: flex;
+        flex-direction: row;
+    }
+
+    #input-message {
+        flex-grow: 1;
+        margin-right: 10px;
+    }
+</style>
+<head>
+</head>
+<body>
+<span id="user-id">U39931</span>
+<button onclick="orb.click('.support')">Contact support</button>
+<div id="chat">
+    <div id="history"></div>
+    <form id="input">
+        <input id="input-message" autocomplete="off"/>
+        <button id="input-send">Send</button>
+    </form>
+</div>
+<script type="text/javascript">
+    const userId = document.getElementById("user-id")
+    const history = document.getElementById("history")
+    const input = document.getElementById("input")
+    const inputMessage = document.getElementById("input-message")
+    const inputSend = document.getElementById("input-send")
+    const rendered = {}
+
+    function listener(events) {
+        for (const event of [...events.stream].reverse()) {
+            if (!rendered[event.id]) {
+                render(event, events)
+                rendered[event.id] = true
+            }
+        }
+    }
+
+    function render(event, events) {
+        const text = event.data.text
+        if (text) {
+            const div = document.createElement("div")
+            let prefix
+            if (events.isSelfEvent(event)) {
+                prefix = "(me): "
+            } else {
+                prefix = `${events.userData[event.data.user_id].name}: `
+            }
+            div.innerText = prefix + text
+            div.className = "card"
+            history.append(div)
+        }
+
+        if (event.type === "meya.button.event.ask") {
+            const div = document.createElement("div")
+            div.className = "card"
+            const buttons = event.data.buttons
+            for (const button of buttons) {
+                const buttonElement = document.createElement("button")
+                buttonElement.innerText = button.text
+                buttonElement.addEventListener("click", () => orb.click(button.button_id))
+                div.append(buttonElement)
+            }
+            history.append(div)
+        }
+    }
+
+    function send() {
+        if (inputMessage.value) {
+            orb.say(inputMessage.value)
+            inputMessage.value = ""
+        }
+    }
+
+    input.addEventListener("submit", (event) => {
+        event.preventDefault()
+        send()
+    })
+
+    window.orbConfig = {
+        connectionOptions: {
+            gridUrl: "https://grid-dc-dev.meya.ai",
+            appId: "app-3246ca840b8640e89dcc0c5e54218343",
+            integrationId: "integration.orb",
+            onFirstConnect: (connectData, next) => {
+                orb.addListener(listener)
+                next()
+            },
+            pageContext: {
+                user_id: userId.innerText
+            }
+        },
+        windowApi: true,
+        headless: true,
+    };
+    (function () {
+        var script = document.createElement("script")
+        script.type = "text/javascript"
+        script.async = true
+        script.src = "https://cdn.meya.ai/v2/orb.js"
+        document.body.appendChild(script)
+        var fontStyleSheet = document.createElement("link")
+        fontStyleSheet.rel = "stylesheet"
+        fontStyleSheet.href = "https://cdn.meya.ai/font/inter.css"
+        document.body.appendChild(fontStyleSheet)
+    })()
+</script>
+</body>
+</html>

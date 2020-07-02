@@ -1,0 +1,13 @@
+triggers:
+  - keyword: button
+
+steps:
+  - (start)
+  - ask: What would you like to do?
+    buttons:
+      - text: Repeat
+        action:
+          jump: start
+      - text: Stop
+        action: next
+  - say: Done

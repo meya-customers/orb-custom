@@ -1,0 +1,5 @@
+triggers:
+  - keyword: hi
+
+steps:
+  - say: Hello (@ user.page_user_id )

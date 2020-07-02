@@ -1,0 +1,6 @@
+triggers:
+  - button_id: .support
+
+steps:
+  - say: Contacting support...
+  - say: TODO
