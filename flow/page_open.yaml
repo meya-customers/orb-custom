@@ -7,4 +7,4 @@ steps:
   - thread_set:
       open_page: true
   - user_set:
-      page_user_id: (@ flow.event.data.context.user_id )
+      page_user_id: (@ flow.context.user_id )

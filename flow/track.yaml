@@ -1,0 +1,14 @@
+triggers:
+  - event_type: meya.analytics.event.track
+    when: (@ event.data.event == "search" )
+  - keyword: report
+    action:
+      jump: report
+
+steps:
+  - user_set:
+      search_count: (@ (user.search_count or 0) + 1 )
+  - end
+
+  - (report)
+  - say: Search count (@ user.search_count or 0 )
