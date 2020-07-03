@@ -1,35 +1,40 @@
 <!doctype html>
 <html>
-<style>
-    #chat {
-        display: flex;
-        flex-direction: column;
-        width: 400px;
-        min-height: 600px;
-        border: 2px solid black;
-        margin: 40px;
-        padding: 20px;
-    }
-
-    #history {
-        flex-grow: 1;
-    }
-
-    .card {
-        margin-bottom: 10px;
-    }
-
-    #input {
-        display: flex;
-        flex-direction: row;
-    }
-
-    #input-message {
-        flex-grow: 1;
-        margin-right: 10px;
-    }
-</style>
 <head>
+    <title>Orb custom chat (script)</title>
+    <style>
+        #chat {
+            display: flex;
+            flex-direction: column;
+            width: 400px;
+            min-height: 600px;
+            border: 2px solid black;
+            margin: 40px;
+            padding: 20px;
+        }
+
+        #history {
+            flex-grow: 1;
+        }
+
+        .card {
+            margin-bottom: 10px;
+        }
+
+        .button {
+            margin-left: 10px;
+        }
+
+        #input {
+            display: flex;
+            flex-direction: row;
+        }
+
+        #input-message {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
 <span id="user-id">U39931</span>
@@ -49,25 +54,28 @@
     const inputMessage = document.getElementById("input-message")
     const inputSend = document.getElementById("input-send")
     const rendered = {}
+    let disableOldButtons = () => {
+    }
 
-    function listener(events) {
-        for (const event of [...events.stream].reverse()) {
+    function onEventStream(eventStream) {
+        disableOldButtons(eventStream)
+        for (const event of [...eventStream.events].reverse()) {
             if (!rendered[event.id]) {
-                render(event, events)
+                render(event, eventStream)
                 rendered[event.id] = true
             }
         }
     }
 
-    function render(event, events) {
+    function render(event, eventStream) {
         const text = event.data.text
         if (text) {
             const div = document.createElement("div")
             let prefix
-            if (events.isSelfEvent(event)) {
+            if (eventStream.isSelfEvent(event)) {
                 prefix = "(me): "
             } else {
-                prefix = `${events.userData[event.data.user_id].name}: `
+                prefix = `${eventStream.userData[event.data.user_id].name}: `
             }
             div.innerText = prefix + text
             div.className = "card"
@@ -78,13 +86,26 @@
             const div = document.createElement("div")
             div.className = "card"
             const buttons = event.data.buttons
+            const buttonElements = []
             for (const button of buttons) {
                 const buttonElement = document.createElement("button")
                 buttonElement.innerText = button.text
                 buttonElement.addEventListener("click", () => orb.click(button.button_id))
+                buttonElement.className = "button"
+                buttonElement.disabled = !eventStream.isActiveEvent(event)
+                buttonElements.push(buttonElement)
                 div.append(buttonElement)
             }
             history.append(div)
+            disableOldButtons = (eventStream) => {
+                if (!eventStream.isActiveEvent(event)) {
+                    for (const buttonElement of buttonElements) {
+                        buttonElement.disabled = true
+                    }
+                    disableOldButtons = () => {
+                    }
+                }
+            }
         }
     }
 
@@ -106,7 +127,7 @@
             appId: "app-3246ca840b8640e89dcc0c5e54218343",
             integrationId: "integration.orb",
             onFirstConnect: (connectData, next) => {
-                orb.addListener(listener)
+                orb.addListener("eventStream", onEventStream)
                 next()
             },
             pageContext: {
